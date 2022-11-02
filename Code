@@ -1,0 +1,409 @@
+//project D-->Parking information system
+
+//Customer accounts that contain account name addresses and car registration including number of entrys, if data is the same then include a discount
+
+//Steps taken
+//user enters and specified floor is entered 
+//users data is recorded
+//random allocation for parking slot
+//if user has an account The data is stored in a separate variable	
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include <stdbool.h> 
+
+
+
+#define slots 160
+#define Total_slots 480
+//slots are 160 becuse each parking level can store an 8*20 grid of cars meaning each floor has 160 car slots in total
+struct cars
+{
+	int x;
+	char N_plate;
+	char Acc[10];
+	char Name[50];
+	char Address[10];
+	int charge;
+};
+
+void get_data(struct cars *st,int *index);
+int Random(int upper, int lower,int count);
+char check(struct cars *st,int *index);
+void select_print(struct cars *st,int index);
+void print_ALL(struct cars *st,int *index);
+void Rates (int Entry_time , int Exit_time, double *cost,double *rates);
+int Randomize(struct cars *st);
+void create_empty(struct cars *st,int *index);
+int Ent_time();
+int Ext_time();
+int Acc_check(struct cars *st,int *entries);
+void store(struct cars *st,struct cars *v,int *entries,int*index);
+void Print_Account(struct cars *st,int entries,int *index);
+void select_print_Accounts(struct cars *st,int entries,int *index);
+int change_rate();
+void charge_plus(struct cars *st,int *index,int Amount);
+void charge_set(struct cars *st,int *index);
+void program_options(struct cars *st,struct cars*v,int entries,int *index,double *rates);
+char fl_enter();
+void initilaize_check(struct cars *st,int *index);
+void create_acc(struct cars *st,struct cars *v,int *entries);
+
+int main(void){
+	
+	int *ptr,i,x,index;
+	char floor,val1,c_or_r;
+	int entries=0;
+	double cost=0,rates=0;
+	
+	//Memory allocation
+	ptr=(int*)malloc(Total_slots*sizeof(int));
+	//If memoey alloation fails
+	if(ptr==NULL){
+		printf("ERROR,memory could not be allocated\n");
+		exit(0);
+	}
+	
+	//Floors
+	struct cars f1[slots]={0};
+	struct cars f2[slots]={0};
+	struct cars f3[slots]={0};
+	struct cars Accounts[slots]={0};
+	
+	//Genral information about the program
+	printf("Welcome to parking management systems tools by Auto spaces\n");
+	printf("Software management tools made simple\n");
+	printf("The program is designed to Store,Allocate and Calulate the prices for either regular or casual cusstomers\n");
+	printf("\n*****************Entry desk*****************\n");
+	//Entering whether they are a regular or casual customer
+	printf("Are they a regurlar or casual customer\n");
+	printf("C-->Casual customer\n");
+	printf("R-->regular customer\n");
+	scanf("%c",&c_or_r);
+	if(c_or_r=='c'||c_or_r=='C'){
+		floor=fl_enter();
+		if(floor=='1'){
+		index=Randomize(f1);
+		get_data(f1,&index);
+		}
+		if(floor=='2'){
+		index=Randomize(f2);
+		get_data(f2,&index);
+		}
+		if(floor=='3'){
+		index=Randomize(f3);
+		get_data(f3,&index);
+		}
+		
+	}
+	else if(c_or_r=='r'||c_or_r=='R'){
+		floor=fl_enter();
+		
+		if(floor=='1'){
+		index=Randomize(f1);
+		initilaize_check(f1,&index);
+		get_data(f1,&index);
+	    store(f1,Accounts,&entries,&index);
+		}
+		if(floor=='2'){
+		index=Randomize(f2);
+		initilaize_check(f2,&index);
+		get_data(f2,&index);
+		store(f2,Accounts,&entries,&index);
+		}
+		if(floor=='3'){
+		index=Randomize(f3);
+		initilaize_check(f3,&index);
+		get_data(f3,&index);
+		store(f3,Accounts,&entries,&index);
+		}
+	}
+	int Entry_time=Ent_time();
+	printf("\n*****************Exit desk*****************\n");
+	//Calcuating amount to be paid accordig to hours stayed
+	int Exit_time=Ext_time();
+	int Hours;
+	
+	//Calculates the hours stayed for each car
+	Hours=Exit_time-Entry_time;
+	Rates(Entry_time,Exit_time,&cost,&rates);
+    printf("Your Parking Fee is %lf pounds\n", cost);
+    
+	//if the user has an account their current charge will be incremented by the amount they have to pay
+	if(floor=='1'){
+		charge_plus(f1,&index,cost);
+	}
+	else if(floor='2'){
+		charge_plus(f2,&index,cost);
+	}
+	else if(floor=='3'){
+		charge_plus(f3,&index,cost);
+	}
+	
+	//Frees up the specific car slot after payment
+	printf("\nWould like to free up the car slot(y/n)\n");
+	char out2;
+	fflush(stdin);
+	scanf(" %c",&out2);
+	if(out2=='y'||out2=='Y'){
+		if(floor=='1'){
+		create_empty(f1,&index);
+		printf("\nCar slot %d for floor 1 is now empty\n",index);
+		}
+		else if(floor=='2'){
+		create_empty(f2,&index);
+		printf("\nCar slot %d for floor 2 is now empty\n",index);
+		}
+		else if(floor=='3'){
+		create_empty(f3,&index);
+		printf("\nCar slot %d for floor 3 is now empty\n",index);
+		}
+	}
+	
+	printf("\n*****************Program options*****************\n");
+	char out3;
+	fflush(stdin);
+	printf("Would you like to access program options(y/n)\n");
+	scanf(" %c",&out3);
+	if(out3=='y'||out3=='Y'){
+		if(floor=='1'){
+			program_options(f1,Accounts,entries,&index,&rates);
+		}
+		else if(floor=='2'){
+			program_options(f2,Accounts,entries,&index,&rates);
+		}
+		else if(floor=='3'){
+			program_options(f3,Accounts,entries,&index,&rates);
+		}
+	}
+	else if(out3=='n'||out3=='N'){
+		exit(0);
+	}
+	
+	free(ptr);
+}
+
+// Random number generator
+int Random(int lower, int upper,int count){
+    int i,x;
+    for (i = 0;i<count;i++){
+       x =(rand() %(upper-lower + 1))+lower;
+       //printf("%Parking slot: %d\n",x);
+    }
+    return x;
+}
+
+//checks whether the index in the array is empty
+char check(struct cars *st,int *index){
+	char result;
+	if(st[*index].x==0){
+		result='y';
+	}
+	else if(st[*index].x==1){
+		result='n';
+	}
+	return result;
+}
+	
+//Gets data about each car from the user
+void get_data(struct cars *st,int *index){
+	printf("Number plate:\n");
+	fflush(stdin);
+	scanf("%c",&st[*index].N_plate);
+	
+	//initilaizes x to 1:
+	st[*index].x=1;
+	
+	int val=Acc_check(st,index);
+	
+	if(val==1){
+		printf("Name:\n");
+		fflush(stdin);
+		scanf("%s",&st[*index].Name);
+		
+		printf("Address:\n");
+		fflush(stdin);
+		scanf("%s",&st[*index].Address);
+	}
+}
+
+//prints a select data value
+void select_print(struct cars *st,int index){
+	printf("Number plate: %s",st[index].N_plate);
+	printf("Account: %s",st[index].Acc);
+	printf("Name: %s",st[index].Name);
+	printf("Address: %s",st[index].Address);
+}
+
+//prints all the values for a select floor
+void print_ALL(struct cars *st,int *index){
+	int i;
+	for(i=0;i<slots;i++){
+		if(check(st,&i)=='n'){
+			select_print(st,i);
+		}
+	}
+}
+
+//calculates how much each user pays according to how long they stayed
+void Rates (int Entry_time , int Exit_time, double *cost,double *rates)
+{
+    double hours;
+    double rate = 2.00;
+
+    hours = (double)(Exit_time-Entry_time)/100 ; 
+    *cost = hours * rate;
+}
+
+//combines the random and check function
+int Randomize(struct cars *st){
+	int val;
+	int lower=0,upper=159,count=1;
+	srand(time(0));
+	val=Random(lower,upper,count);
+	
+	if(check(st,&val)=='y'){
+		val=Random(lower,upper,count);
+	}
+	printf("%\nParking slot: %d\n",val);
+	return val;
+}
+
+//Empties out a specific car slot after paying
+void create_empty(struct cars *st,int *index){
+	st[*index].x=0;
+}
+
+//Records the entry time of the cars
+int Ent_time(){
+	int Entry_time;
+	printf("Time Entered\n");
+	printf("Please Enter Entry time(In military style. For example : 9.30am as 0930)\n");
+	fflush(stdin);
+	scanf("%d",&Entry_time);
+	
+	return Entry_time;	
+}
+
+//Records the exit time of the cars
+int Ext_time(){
+	int Exit_time;
+	printf("Exit time\n");
+	printf("Please Enter Exit time(In military style. For example : 9.30am as 0930)\n");
+	fflush(stdin);
+	scanf("%d",&Exit_time);
+	
+	
+	
+	return Exit_time;
+}
+
+//Checks if the cars that enter have accounts or not
+int Acc_check(struct cars *st, int *index){
+	int var;
+	var=strcmp(st[*index].Acc,"yes");
+	if(var==0){
+		var=1;	
+	}
+	else{
+		var=0;
+	}
+	//printf("%d\n",var);
+	return var;
+	
+}
+
+//Storing users in Accounts
+void store(struct cars *st,struct cars *v,int *entries,int*index){
+	if(Acc_check(st,index)==1){
+		v[*entries]=st[*index];
+	}
+	//printf("done\n");
+}
+
+//prints a select index from the Accounts
+void select_print_Accounts(struct cars *st,int entries,int *index){
+	   	printf("\nNumber plate: %s\n",st[entries].N_plate);
+	    printf("Account: %s\n",st[entries].Acc);
+		printf("Name: %s\n",st[entries].Name);
+		printf("Address: %s\n",st[entries].Address);
+}
+//prints the registered accounts stored in Accounts
+
+void Print_Account(struct cars *st,int entries,int *index){
+	int i;
+	for(i=0;i<entries;i++){
+			select_print_Accounts(st,i,index);
+		}
+}
+
+//Displays the options avaliable to the user
+void program_options(struct cars *st,struct cars*v,int entries,int *index,double *rates){
+	char options;
+	printf("\nProgram options\n");
+	printf("1-->Display registerd users in account\n");
+	printf("2-->Display current cars for selected floor\n");
+	printf("3-->Change charge tables\n");
+	printf("4-->Create account\n");
+	printf("Enter option\n");
+	fflush(stdin);
+	scanf(" %c",&options);
+	if(options=='1'){
+		Print_Account(v,entries,index);
+	}
+	else if(options=='2'){
+		print_ALL(st,index);
+	}
+	else if(options=='3'){
+	   change_rate(&rates);
+	}
+	else if(options=='4'){
+		create_acc(st,v,&entries);
+	}
+}
+
+//Allows the user to change the charge tables
+int change_rate(double *rates){
+	printf("Enter the new charge rate for the system\n");
+	scanf("%lf",&rates);
+}
+
+//Inecrements the users charge by the amount they need to pay
+void charge_plus(struct cars *st,int *index,int Amount){
+	if(Acc_check(st,index)==1){
+	 	st[*index].charge+=Amount;
+	}
+}
+
+//sets the users charge initially to 0
+void charge_set(struct cars *st,int *index){
+	st[*index].charge=0;
+}
+
+//Asking the operator to choose the customers prefered floor	
+char fl_enter(){
+	char floor;
+	printf("\nfloors:\n");
+	printf("1--->Floor 1\n");
+	printf("2--->Floor 2\n");
+	printf("3--->Floor 3\n");
+	printf("Enter floor number\n");
+	scanf(" %c",&floor);
+	
+	return floor;
+}
+
+void initilaize_check(struct cars *st,int *index){
+	strcpy(st[*index].Acc, "yes");
+
+}
+
+void create_acc(struct cars *st,struct cars *v,int *entries){
+	int index; 
+	index=Randomize(st);
+	initilaize_check(st,&index);
+	get_data(st,&index);
+	store(st,v,entries,&index);
+}
+
